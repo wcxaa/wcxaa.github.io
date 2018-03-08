@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang=Ch>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="函数执行过程JavaScript中，内存可以划分为调用栈（Call Stack）、堆（Heap）以及队列（Queue）等几个部分。 当我们调用一个函数时，函数地址、参数、局部变量会压入 stack 中。查看此文章帮助理解。   函数中分配的变量，在使用Number、String、Boolean这种基本数据类型时会存在 stack 中，而对象、数组这些复杂类型则存储在 heap(堆) 中， stac">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JavaScript 事件循环浅析">
+<meta property="og:url" content="https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/index.html">
+<meta property="og:site_name" content="WCX">
+<meta property="og:description" content="函数执行过程JavaScript中，内存可以划分为调用栈（Call Stack）、堆（Heap）以及队列（Queue）等几个部分。 当我们调用一个函数时，函数地址、参数、局部变量会压入 stack 中。查看此文章帮助理解。   函数中分配的变量，在使用Number、String、Boolean这种基本数据类型时会存在 stack 中，而对象、数组这些复杂类型则存储在 heap(堆) 中， stac">
+<meta property="og:locale" content="Chinese">
+<meta property="og:image" content="https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/1.png">
+<meta property="og:updated_time" content="2018-03-08T16:28:38.861Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JavaScript 事件循环浅析">
+<meta name="twitter:description" content="函数执行过程JavaScript中，内存可以划分为调用栈（Call Stack）、堆（Heap）以及队列（Queue）等几个部分。 当我们调用一个函数时，函数地址、参数、局部变量会压入 stack 中。查看此文章帮助理解。   函数中分配的变量，在使用Number、String、Boolean这种基本数据类型时会存在 stack 中，而对象、数组这些复杂类型则存储在 heap(堆) 中， stac">
+<meta name="twitter:image" content="https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/1.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>JavaScript 事件循环浅析</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- rss -->
+    
+    
+</head>
+
+<body>
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2018/03/08/webpack-tapable/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2017/10/10/fis3-release-analyze/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&text=JavaScript 事件循环浅析"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&is_video=false&description=JavaScript 事件循环浅析"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=JavaScript 事件循环浅析&body=Check out this article: https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&name=JavaScript 事件循环浅析&description="><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#函数执行过程"><span class="toc-number">1.</span> <span class="toc-text">函数执行过程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#事件循环"><span class="toc-number">2.</span> <span class="toc-text">事件循环</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index width mx-auto px2 my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        JavaScript 事件循环浅析
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">WCX</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-10-19T11:07:34.000Z" itemprop="datePublished">2017-10-19</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="函数执行过程"><a href="#函数执行过程" class="headerlink" title="函数执行过程"></a>函数执行过程</h1><p>JavaScript中，内存可以划分为调用栈（<code>Call Stack</code>）、堆（<code>Heap</code>）以及队列（<code>Queue</code>）等几个部分。</p>
+<p>当我们调用一个函数时，函数地址、参数、局部变量会压入 stack 中。查看<a href="https://github.com/ccforward/cc/issues/47" target="_blank" rel="noopener">此文章</a>帮助理解。  </p>
+<p>函数中分配的变量，在使用Number、String、Boolean这种基本数据类型时会存在 stack 中，而对象、数组这些复杂类型则存储在 heap(堆) 中， stack 只存放了它们对应的指针。当函数执行结束从 stack 中弹出来时，只有对象的指针被弹出，而真正的值依然存在 heap 中，然后由垃圾回收器自动的清理回收。</p>
+<h1 id="事件循环"><a href="#事件循环" class="headerlink" title="事件循环"></a>事件循环</h1><p>v8 是单线程的，但底层的 C++ 不是。这意味着我们在执行一些非阻塞的操作时，可以在底层开启一个新线程与主线程的js代码同时执行。当这个阻塞操作执行完毕后，返回值和回调组成一个任务添加进任务队列中。当 stack 为空即主线程的代码执行完毕时，主线程会查询任务队列，顺序执行任务队列中的任务。</p>
+<p>任务队列分为 macrotack 队列和 microtack 队列:</p>
+<p>macrotask 包括类似鼠标点击事件的回调、setTimeout、setInterval、setImmediate、requestAnimationFrame, I/O, UI rendering 等。  </p>
+<p>microtask 包括process.nextTick, Promises, Object.observe, MutationObserver 等。</p>
+<p>事件循环执行顺序如图所示：</p>
+<p><img src="./1.png" alt=""><br>这个图有个点没描述清楚，microtask队列总是在下个macrotask执行前执行，即 stack 为空，主线程的代码执行完毕后，主线程会先执行microtask 队列，然后执行下个 macrotask ,执行完毕后如果microtask 队列中有任务，执行microtask…<br>任何在microtask执行期间添加的microtask，会被添加到本轮循环的  microtask 队列中的最后执行。</p>
+<p>最后用个例子来理解一下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> <span class="title">test</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;<span class="built_in">console</span>.log(<span class="number">4</span>)&#125;, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> <span class="title">executor</span>(<span class="params">resolve</span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">        <span class="keyword">for</span>( <span class="keyword">var</span> i=<span class="number">0</span> ; i&lt;<span class="number">10000</span> ; i++ ) &#123;</span><br><span class="line">            i == <span class="number">9999</span> &amp;&amp; resolve();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="number">2</span>);</span><br><span class="line">    &#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="number">5</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出结果为：</span></span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="comment">// 2</span></span><br><span class="line"><span class="comment">// 3</span></span><br><span class="line"><span class="comment">// 5</span></span><br><span class="line"><span class="comment">// 4</span></span><br><span class="line"><span class="comment">// Promise.then 是异步执行的，而创建 Promise 实例是同步执行的</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>本文参考并引用了如下文章：</p>
+<ol>
+<li><a href="https://github.com/ccforward/cc/issues/47" target="_blank" rel="noopener">https://github.com/ccforward/cc/issues/47</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/29116364?utm_medium=social&amp;utm_source=qq" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/29116364?utm_medium=social&amp;utm_source=qq</a></li>
+<li><a href="https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/" target="_blank" rel="noopener">https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/</a></li>
+</ol>
+</blockquote>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#函数执行过程"><span class="toc-number">1.</span> <span class="toc-text">函数执行过程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#事件循环"><span class="toc-number">2.</span> <span class="toc-text">事件循环</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&text=JavaScript 事件循环浅析"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&is_video=false&description=JavaScript 事件循环浅析"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=JavaScript 事件循环浅析&body=Check out this article: https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&title=JavaScript 事件循环浅析"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2017/10/19/JavaScript-Event-Loop/&name=JavaScript 事件循环浅析&description="><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 WCX
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m) {i['GoogleAnalyticsObject']=r;i[r]=i[r]||function() {
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-99901747-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+<!-- Disqus Comments -->
+
+

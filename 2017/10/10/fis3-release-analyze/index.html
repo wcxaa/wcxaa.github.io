@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang=Ch>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="一、FIS3是什么？FIS3 是面向前端的工程构建工具。解决前端工程中性能优化、资源加载（异步、同步、按需、预加载、依赖管理、合并、内嵌）、模块化开发、自动化工具、开发规范、代码部署等问题。如果对FIS3还不够了解，请查阅官方文档。 FIS以fis-kernel为核心。fis-kernel提供了FIS的底层能力，包含了一系列模块，如配置、缓存、文件处理、日志等。主要核心代码都在fis3/lib这个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FIS3 源码分析">
+<meta property="og:url" content="https://wcxaa.github.io/2017/10/10/fis3-release-analyze/index.html">
+<meta property="og:site_name" content="WCX">
+<meta property="og:description" content="一、FIS3是什么？FIS3 是面向前端的工程构建工具。解决前端工程中性能优化、资源加载（异步、同步、按需、预加载、依赖管理、合并、内嵌）、模块化开发、自动化工具、开发规范、代码部署等问题。如果对FIS3还不够了解，请查阅官方文档。 FIS以fis-kernel为核心。fis-kernel提供了FIS的底层能力，包含了一系列模块，如配置、缓存、文件处理、日志等。主要核心代码都在fis3/lib这个">
+<meta property="og:locale" content="Chinese">
+<meta property="og:image" content="https://wcxaa.github.io/2017/10/10/fis3-release-analyze/workflow.png">
+<meta property="og:updated_time" content="2018-03-08T16:28:38.862Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FIS3 源码分析">
+<meta name="twitter:description" content="一、FIS3是什么？FIS3 是面向前端的工程构建工具。解决前端工程中性能优化、资源加载（异步、同步、按需、预加载、依赖管理、合并、内嵌）、模块化开发、自动化工具、开发规范、代码部署等问题。如果对FIS3还不够了解，请查阅官方文档。 FIS以fis-kernel为核心。fis-kernel提供了FIS的底层能力，包含了一系列模块，如配置、缓存、文件处理、日志等。主要核心代码都在fis3/lib这个">
+<meta name="twitter:image" content="https://wcxaa.github.io/2017/10/10/fis3-release-analyze/workflow.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>FIS3 源码分析</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- rss -->
+    
+    
+</head>
+
+<body>
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2017/10/19/JavaScript-Event-Loop/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2017/05/25/un-fixing-fixed-elements-with-css-transforms/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&text=FIS3 源码分析"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&is_video=false&description=FIS3 源码分析"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=FIS3 源码分析&body=Check out this article: https://wcxaa.github.io/2017/10/10/fis3-release-analyze/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&name=FIS3 源码分析&description="><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、FIS3是什么？"><span class="toc-number">1.</span> <span class="toc-text">一、FIS3是什么？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、fis3-release？"><span class="toc-number">2.</span> <span class="toc-text">二、fis3 release？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-总体编译流程"><span class="toc-number">2.1.</span> <span class="toc-text">1.总体编译流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-单文件编译过程"><span class="toc-number">2.2.</span> <span class="toc-text">2.单文件编译过程</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index width mx-auto px2 my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        FIS3 源码分析
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">WCX</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-10-10T07:59:23.000Z" itemprop="datePublished">2017-10-10</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="一、FIS3是什么？"><a href="#一、FIS3是什么？" class="headerlink" title="一、FIS3是什么？"></a>一、FIS3是什么？</h1><p>FIS3 是面向前端的工程构建工具。解决前端工程中性能优化、资源加载（异步、同步、按需、预加载、依赖管理、合并、内嵌）、模块化开发、自动化工具、开发规范、代码部署等问题。<br>如果对FIS3还不够了解，请查阅<a href="http://fis.baidu.com" target="_blank" rel="noopener">官方文档</a>。</p>
+<p>FIS以fis-kernel为核心。fis-kernel提供了FIS的底层能力，包含了一系列模块，如配置、缓存、文件处理、日志等。主要核心代码都在<code>fis3/lib</code>这个文件夹内。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">lib/</span><br><span class="line">├── cache.js	// 用于缓存目标文件的编译信息和编译结果。</span><br><span class="line">├── cli.js	// 命令行相关的信息和工具类方法暴露在此模块中。</span><br><span class="line">├── compile.js	// （单）文件编译模块。</span><br><span class="line">├── config.js	// 配置模块，包含fis默认配置。</span><br><span class="line">├── file.js	// 文件操作模块。</span><br><span class="line">├── fis.js	// fis构造模块。</span><br><span class="line">├── log.js	// 日志输出模块。</span><br><span class="line">├── project.js	// 项目相关模块，比如获取、设置项目构建根路径、设置、获取临时路径等。</span><br><span class="line">├── release.js	// fis 整体编译入口。fis release 的时候调用，依赖 compile.js 完成单文件编译。同时还完成如文件打包等任务。</span><br><span class="line">├── require.js	// 用来加载 fis 插件。</span><br><span class="line">├── uri.js	// 基于路径查找文件，支持相对路径，基于项目的绝对路径。</span><br><span class="line">└── util.js	// fis 中工具类操作集合。</span><br></pre></td></tr></table></figure></p>
+<h1 id="二、fis3-release？"><a href="#二、fis3-release？" class="headerlink" title="二、fis3 release？"></a>二、fis3 release？</h1><p>下面我将分析运行<code>fis3 release</code>这条命令将发生什么：</p>
+<p>首先，我们从package.json文件的bin字段可以得到，fis3的命令入口为<code>bin/fis.js</code>文件。<br><code>bin/fis.js</code>文件主要是用来解析并包装命令行的参数。<code>bin/fis.js</code>中用到了<a href="https://www.npmjs.com/package/minimist" target="_blank" rel="noopener">minimist</a>和<a href="https://www.npmjs.com/package/liftoff" target="_blank" rel="noopener">liftoff</a>插件。<br><a href="https://www.npmjs.com/package/minimist" target="_blank" rel="noopener">minimist</a>是用来解析命令行参数的。<br><a href="https://www.npmjs.com/package/liftoff" target="_blank" rel="noopener">liftoff</a>用于构建命令行应用程序的引导工具。<br>通过调用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// var argv = require(&apos;minimist&apos;)(process.argv.slice(2));</span><br><span class="line">// env: https://www.npmjs.com/package/liftoff#callbackenv</span><br><span class="line">fis.cli.run(argv, env);</span><br></pre></td></tr></table></figure></p>
+<p>将程序转入<code>lib/cli.js</code>中执行。</p>
+<p><code>lib/cli.js</code>主要封装了命令行相关的信息和工具类方法。<code>fis release</code>等命令将会调用具体的插件来执行任务。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var cmd = fis.require(&apos;command&apos;, cmdName);</span><br><span class="line">...</span><br><span class="line">// cli: fis.cli</span><br><span class="line">cmd.run(argv, cli, env);</span><br></pre></td></tr></table></figure></p>
+<p>程序转入了<code>fis3-command-release</code>这个插件中执行。</p>
+<p><code>fis3-command-release</code>主要是对release流程的控制：<code>watch release livereload deploy</code>。<br>其中最核心的是文件编译部分，调用了<code>fis.release</code>，在<code>lib/release</code>中，这是fis整体编译入口。</p>
+<h2 id="1-总体编译流程"><a href="#1-总体编译流程" class="headerlink" title="1.总体编译流程"></a>1.总体编译流程</h2><p>下面就进入到fis的编译流程中，我们首先用一张图来描述整个编译过程：</p>
+<p><img src="./workflow.png" alt="workflow"></p>
+<p>然后我们开始进入<code>fis.release</code>函数，和图中一样，首先是获取需要编译的文件列表。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function(opt, callback) &#123;</span><br><span class="line"></span><br><span class="line">  var src = &#123;&#125;;</span><br><span class="line">  if (Array.isArray(opt.srcCache) &amp;&amp; opt.srcCache.length) &#123;</span><br><span class="line">    opt.srcCache.forEach(function(path) &#123;</span><br><span class="line">      if (!fis.util.isFile(path)) return;</span><br><span class="line"></span><br><span class="line">      var file = fis.file(path);</span><br><span class="line">      if (file.release) &#123;</span><br><span class="line">        src[file.subpath] = file;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    src = fis.project.getSource();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>先从<code>opt.srcCache</code>需要编译的文件列表，当没有填写时，fis 将通过<code>fis.project.getSource()</code>获取。</p>
+<p>然后触发<code>release:start</code>,<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fis.emit(&apos;release:start&apos;, ret);</span><br></pre></td></tr></table></figure></p>
+<p>添加一些事件钩子函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">beforeEach 编译开始前执行的回调函数，无论走缓存与否。</span><br><span class="line">afterEach 编译完成后执行的回调函数，无论走缓存与否。</span><br><span class="line">beforeCompile 编译开始前执行，当采用缓存时不执行。</span><br><span class="line">afterCompile 编译完成后执行，当采用缓存时不执行。</span><br><span class="line">beforeCacheRevert 在缓存被应用到文件对象前执行。</span><br><span class="line">afterCacheRevert 在缓存被应用到文件对象后执行。</span><br><span class="line"></span><br><span class="line">fis.on(&apos;compile:start&apos;, (onCompileStart = function(file) &#123;</span><br><span class="line">    opt.beforeEach &amp;&amp; opt.beforeEach(file, ret);</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line">fis.on(&apos;compile:end&apos;, (onCompileEnd = function(file) &#123;</span><br><span class="line">    opt.afterEach &amp;&amp; opt.afterEach(file, ret);</span><br><span class="line">    collect(file); // //添加到resource map中</span><br><span class="line">&#125;));</span><br><span class="line"></span><br><span class="line">fis.on(&apos;process:end&apos;, (onProcessEnd = function(file) &#123; // 添加同名依赖</span><br><span class="line">    if (file.useSameNameRequire) &#123;</span><br><span class="line">      if (file.isJsLike) &#123;</span><br><span class="line">        file.addSameNameRequire(&apos;.css&apos;);</span><br><span class="line">      &#125; else if (file.isHtmlLike) &#123;</span><br><span class="line">        file.addSameNameRequire(&apos;.js&apos;);</span><br><span class="line">        file.addSameNameRequire(&apos;.css&apos;);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;));</span><br><span class="line"></span><br><span class="line">var onAddFileToCompile = function(file) &#123;</span><br><span class="line">    pending.push(file);</span><br><span class="line">&#125;;</span><br><span class="line">fis.on(&apos;compile:add&apos;, onAddFileToCompile);</span><br></pre></td></tr></table></figure></p>
+<p>然后开始一个个进行单文件编译：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">try &#123;</span><br><span class="line">    while (pending.length) &#123;</span><br><span class="line">      var file = pending.shift();</span><br><span class="line">      fis.compile(file, opt); //单文件编译</span><br><span class="line">    &#125;</span><br><span class="line">&#125; finally &#123;</span><br><span class="line">    fis.removeListener(&apos;compile:add&apos;, onAddFileToCompile);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当所有文件编译结束后，开始进入打包阶段：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">// 首先开始根据用户配置的 fis.match 生成 pack 表。</span><br><span class="line">conf = buildPack(ret);</span><br><span class="line"></span><br><span class="line">// 然后根据用户的配置和默认配置，进行prepackager, packager, spriter, postpackager打包</span><br><span class="line">[&apos;prepackager&apos;, &apos;packager&apos;, &apos;spriter&apos;, &apos;postpackager&apos;].forEach(function(name) &#123;</span><br><span class="line"></span><br><span class="line">    if (packager[name]) &#123;</span><br><span class="line">      // fis.match 中配置的优先，所以，这里直接覆盖就行了。</span><br><span class="line">      fis.media().set(&apos;modules.&apos; + name, packager[name]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fis.util.pipe(name, cb, opt[name]);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">// 然后触发编译结束</span><br><span class="line">fis.emit(&apos;release:end&apos;, ret);</span><br></pre></td></tr></table></figure></p>
+<h2 id="2-单文件编译过程"><a href="#2-单文件编译过程" class="headerlink" title="2.单文件编译过程"></a>2.单文件编译过程</h2><p>下面我们进入<code>fis.compile</code>来看看单文件编译过程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">// 编译相关函数入口, 输入为 文件对象，没有输出，直接修改文件对象内容。</span><br><span class="line">function(file, context) &#123;</span><br><span class="line"></span><br><span class="line">  // 默认文件编译会尝试从缓存中读取，如果缓存有效，将跳过编译。</span><br><span class="line">  if (file.useCache &amp;&amp; memoryCache[file.realpath]) &#123;</span><br><span class="line">    revertFromMemory(file, memoryCache[file.realpath]);</span><br><span class="line">    return file;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 只有启用 cache 的时候才存入 memoryCache</span><br><span class="line">  file.useCache &amp;&amp; (memoryCache[file.realpath] = file);</span><br><span class="line"></span><br><span class="line">  // lint 置前，不使用文件缓存</span><br><span class="line">  if (file.isText() &amp;&amp; exports.settings.useLint) &#123;</span><br><span class="line">    pipe(file, &apos;lint&apos;, true);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  // 然后触发编译开始</span><br><span class="line">  fis.emit(&apos;compile:start&apos;, file);</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  // 下面真正编译文件的代码只有这句：</span><br><span class="line">  process(file);</span><br><span class="line"></span><br><span class="line">  // 加hash</span><br><span class="line">  if (file.useHash) &#123;</span><br><span class="line">    file.getHash();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 触发编译结束</span><br><span class="line">  fis.emit(&apos;compile:end&apos;, file);</span><br><span class="line"></span><br><span class="line">  // 若不是文件变化触发的重新编译，则进入相关文件编译。</span><br><span class="line">  context &amp;&amp; context.fromWatch || file.links.forEach(function(subpath) &#123;</span><br><span class="line">    var f = fis.file.wrap(fis.project.getProjectPath() + subpath);</span><br><span class="line"></span><br><span class="line">    if (f.exists() &amp;&amp; !~compileStack.indexOf(f.realpath)) &#123;</span><br><span class="line">      fis.emit(&apos;compile:add&apos;, f);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  return file;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们重点查看process函数，发现十分简洁，就是之前图示之中的流程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 单文件编译入口，与 &#123;@link fis.compile&#125; 不同的是，此方法内部不进行缓存判断。</span><br><span class="line"> * @param  &#123;File&#125; file 文件对象</span><br><span class="line"> * @memberOf fis.compile</span><br><span class="line"> * @name process</span><br><span class="line"> * @function</span><br><span class="line"> */</span><br><span class="line">function process(file, context) &#123;</span><br><span class="line">  fis.emit(&apos;process:start&apos;, file);</span><br><span class="line">  pipe(file, &apos;parser&apos;);</span><br><span class="line">  pipe(file, &apos;preprocessor&apos;);</span><br><span class="line">  pipe(file, &apos;standard&apos;);</span><br><span class="line">  postStandard(file, context);</span><br><span class="line">  pipe(file, &apos;postprocessor&apos;);</span><br><span class="line">  pipe(file, &apos;optimizer&apos;);</span><br><span class="line">  fis.emit(&apos;process:end&apos;, file);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中<code>pipe(file, &#39;standard&#39;)</code>会转入<code>builtinStandard</code>，这是内置的标准化处理函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 内置的标准化处理函数，外部可以覆写此过程。</span><br><span class="line"> *</span><br><span class="line"> * - 对 html 文件进行 &#123;@link fis.compile.extHtml&#125; 处理。</span><br><span class="line"> * - 对 js 文件进行 &#123;@link fis.compile.extjs&#125; 处理。</span><br><span class="line"> * - 对 css 文件进行 &#123;@link fis.compile.extCss&#125; 处理。</span><br><span class="line"> *</span><br><span class="line"> * @param  &#123;String&#125; content 文件内容</span><br><span class="line"> * @param  &#123;File&#125; file    文件对象</span><br><span class="line"> * @param  &#123;Object&#125; conf    标准化配置项</span><br><span class="line"> * @memberOf fis.compile</span><br><span class="line"> * @inner</span><br><span class="line"> */</span><br><span class="line">function builtinStandard(content, file, conf) &#123;</span><br><span class="line">  if (typeof content === &apos;string&apos;) &#123;</span><br><span class="line">    fis.log.debug(&apos;builtin standard for [%s] start&apos;, file.realpath);</span><br><span class="line">    var type;</span><br><span class="line">    if (conf.type &amp;&amp; conf.type !== &apos;auto&apos;) &#123;</span><br><span class="line">      type = conf.type;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">      type = file.isHtmlLike ? &apos;html&apos; : (file.isJsLike ? &apos;js&apos; : (file.isCssLike ? &apos;css&apos; : &apos;&apos;));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    switch (type) &#123;</span><br><span class="line">      case &apos;html&apos;:</span><br><span class="line">        content = extHtml(content, null, file);</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">      case &apos;js&apos;:</span><br><span class="line">        content = extJs(content, null, file);</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">      case &apos;css&apos;:</span><br><span class="line">        content = extCss(content, null, file);</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">      default:</span><br><span class="line">        // unrecognized.</span><br><span class="line">        break;</span><br><span class="line">    &#125;</span><br><span class="line">    fis.log.debug(&apos;builtin standard for [%s] end&apos;, file.realpath);</span><br><span class="line">  &#125;</span><br><span class="line">  return content;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>主要是对fis3中的内置语法做处理。</p>
+<p>fis3 release的主要流程就分析到这，其实流程特别清晰，就是我们一开始所放的那张图，根据那张图我们可以编写合适的插件，来满足我们不同的构建需求。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>fis3的构建流程是值得我们好好学习的，流程特别清晰，相比webpack的“黑盒”，fis每一步做了什么都一目了然，我们自己也可以很方便的编写需要的插件。不过fis的生态和webpack真是没法比，最近学习了vue，官方推荐用webpack，而且还有vue-cli省去了配置的麻烦，一套写下来真是特别舒爽，下面我还是会着重了解下webpack。</p>
+<blockquote>
+<p>本文参考了 <a href="https://github.com/chyingp/blog/issues/29" target="_blank" rel="noopener">https://github.com/chyingp/blog/issues/29</a></p>
+</blockquote>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、FIS3是什么？"><span class="toc-number">1.</span> <span class="toc-text">一、FIS3是什么？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、fis3-release？"><span class="toc-number">2.</span> <span class="toc-text">二、fis3 release？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-总体编译流程"><span class="toc-number">2.1.</span> <span class="toc-text">1.总体编译流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-单文件编译过程"><span class="toc-number">2.2.</span> <span class="toc-text">2.单文件编译过程</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&text=FIS3 源码分析"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&is_video=false&description=FIS3 源码分析"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=FIS3 源码分析&body=Check out this article: https://wcxaa.github.io/2017/10/10/fis3-release-analyze/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&title=FIS3 源码分析"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2017/10/10/fis3-release-analyze/&name=FIS3 源码分析&description="><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 WCX
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m) {i['GoogleAnalyticsObject']=r;i[r]=i[r]||function() {
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-99901747-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+<!-- Disqus Comments -->
+
+
