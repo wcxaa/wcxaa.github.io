@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang=Ch>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="这个标题是直接借用的这篇 blog 的标题。最近写了几个小程序，关于数据层应该如何设计，下面我将谈谈自己的体会。 1. 什么是单页应用的数据层？ 图1  上图是我写的小程序的层次示意图，简单一点说，数据层对应单页应用中的store。 2. 为什么需要数据层？单页应用现在都是用MVVM框架实现的，这些框架的核心就是数据驱动视图。用函数表示就是：1view = f(state) 我们所需要做的就是定义">
+<meta property="og:type" content="article">
+<meta property="og:title" content="复杂单页应用的数据层设计">
+<meta property="og:url" content="https://wcxaa.github.io/2018/07/09/spa-store-design/index.html">
+<meta property="og:site_name" content="WCX">
+<meta property="og:description" content="这个标题是直接借用的这篇 blog 的标题。最近写了几个小程序，关于数据层应该如何设计，下面我将谈谈自己的体会。 1. 什么是单页应用的数据层？ 图1  上图是我写的小程序的层次示意图，简单一点说，数据层对应单页应用中的store。 2. 为什么需要数据层？单页应用现在都是用MVVM框架实现的，这些框架的核心就是数据驱动视图。用函数表示就是：1view = f(state) 我们所需要做的就是定义">
+<meta property="og:locale" content="Chinese">
+<meta property="og:image" content="https://wcxaa.github.io/2018/07/09/spa-store-design/client-layers.jpg">
+<meta property="og:updated_time" content="2018-07-10T09:39:54.929Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="复杂单页应用的数据层设计">
+<meta name="twitter:description" content="这个标题是直接借用的这篇 blog 的标题。最近写了几个小程序，关于数据层应该如何设计，下面我将谈谈自己的体会。 1. 什么是单页应用的数据层？ 图1  上图是我写的小程序的层次示意图，简单一点说，数据层对应单页应用中的store。 2. 为什么需要数据层？单页应用现在都是用MVVM框架实现的，这些框架的核心就是数据驱动视图。用函数表示就是：1view = f(state) 我们所需要做的就是定义">
+<meta name="twitter:image" content="https://wcxaa.github.io/2018/07/09/spa-store-design/client-layers.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>复杂单页应用的数据层设计</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- rss -->
+    
+    
+</head>
+
+<body>
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2018/03/08/webpack-tapable/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2018/07/09/spa-store-design/"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&text=复杂单页应用的数据层设计"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&is_video=false&description=复杂单页应用的数据层设计"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=复杂单页应用的数据层设计&body=Check out this article: https://wcxaa.github.io/2018/07/09/spa-store-design/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&name=复杂单页应用的数据层设计&description="><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-什么是单页应用的数据层？"><span class="toc-number">1.</span> <span class="toc-text">1. 什么是单页应用的数据层？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-为什么需要数据层？"><span class="toc-number">2.</span> <span class="toc-text">2. 为什么需要数据层？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-怎样设计数据层？"><span class="toc-number">3.</span> <span class="toc-text">3. 怎样设计数据层？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#（1）数据聚合放在前端"><span class="toc-number">3.1.</span> <span class="toc-text">（1）数据聚合放在前端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#（2）数据缓存"><span class="toc-number">3.2.</span> <span class="toc-text">（2）数据缓存</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-待深入的点"><span class="toc-number">4.</span> <span class="toc-text">4. 待深入的点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-总结"><span class="toc-number">5.</span> <span class="toc-text">5. 总结</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index width mx-auto px2 my4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        复杂单页应用的数据层设计
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">WCX</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2018-07-09T10:22:38.000Z" itemprop="datePublished">2018-07-09</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>这个标题是直接借用的这篇 <a href="https://github.com/xufei/blog/issues/42" target="_blank" rel="noopener">blog</a> 的标题。最近写了几个小程序，关于数据层应该如何设计，下面我将谈谈自己的体会。</p>
+<h1 id="1-什么是单页应用的数据层？"><a href="#1-什么是单页应用的数据层？" class="headerlink" title="1. 什么是单页应用的数据层？"></a>1. 什么是单页应用的数据层？</h1><p><img src="./client-layers.jpg" alt="图1"></p>
+<center>图1</center>
+
+<p>上图是我写的小程序的层次示意图，简单一点说，数据层对应单页应用中的store。</p>
+<h1 id="2-为什么需要数据层？"><a href="#2-为什么需要数据层？" class="headerlink" title="2. 为什么需要数据层？"></a>2. 为什么需要数据层？</h1><p>单页应用现在都是用MVVM框架实现的，这些框架的核心就是数据驱动视图。用函数表示就是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">view = f(state)</span><br></pre></td></tr></table></figure></p>
+<p>我们所需要做的就是定义state和view，框架则是实现f，自动将state映射到相应的view。所以页面中的交互就转化为操作对应的state。</p>
+<p>复杂的单页应用会划分为好多页面和组件，有一些state会被多个视图所使用，并保持一定的同步，这就需要我们将这些state放到store中，全局来管理。而将store划为数据层，则是为了和视图层分离，让代码层次更清晰，更易维护。那为什么这样更清晰，更易维护呢？</p>
+<p>首先从图1中可以看出：<br>应用被划分为前端+后端（client+server）</p>
+<p>因为应用可以抽象为数据+数据流转，而数据更易抽象和复用，所以后端负责把应用抽象为数据，把业务逻辑抽象为数据操作，然后封装成API供前端调用，而前端主要负责的是展示视图与交互。这样业务逻辑清晰，视图可以按需定制。</p>
+<p>对于一部分应用，可能前端主要就是展示视图与交互，业务复杂度在后端，因此用不到数据层。<br>可是现在单页应用越来越复杂，而且需要无刷新，一个状态的改变可能需要几十个相关视图更新，而且数据需要拉取、聚合、过滤，更新等，前端逻辑变复杂了，如果这些逻辑仍和视图层代码混在一块，将使交互逻辑不清晰，代码难于维护，定制视图的成本变高。而往往这部分数据操作是可复用的，因此抽象出数据层，能使前端业务代码更聚焦于展示视图与交互。</p>
+<h1 id="3-怎样设计数据层？"><a href="#3-怎样设计数据层？" class="headerlink" title="3. 怎样设计数据层？"></a>3. 怎样设计数据层？</h1><h2 id="（1）数据聚合放在前端"><a href="#（1）数据聚合放在前端" class="headerlink" title="（1）数据聚合放在前端"></a>（1）数据聚合放在前端</h2><p>后端数据库中存储的数据都是原子化的，数据间建立关联，同一份数据不会维护在多个地方。而前端视图中所需要的数据格式往往是和数据库中不同的，因此需要一些聚合的过程，聚合出视图需要的数据格式。数据聚合可以放在后端，可以放在前端，甚至放在中间层。</p>
+<p>复杂的单页应用往往会有很多细粒度的更新，而且一个数据更新了，相关数据也需要更新，数据聚合放在前端，前端可以根据视图需要，快速聚合出相应数据。</p>
+<p>从图1可以看出，视图层应聚焦展示视图与交互，有了MVVM框架，视图可以自动根据数据来渲染视图，有前端数据层作为server数据的适配层，视图层可以直接从数据层拿需要的数据进行渲染，视图层逻辑聚焦在交互上。</p>
+<p>数据聚合放在数据层就是计算属性，对应于vuex中的getters，redux可以借助reselect实现，用vuex代码举例：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    state: &#123;</span><br><span class="line">        articles: [],</span><br><span class="line">        userArticles: [],</span><br><span class="line">    &#125;,</span><br><span class="line">    getters: &#123;</span><br><span class="line">    	getArticles: <span class="function"><span class="params">state</span> =&gt;</span> bookId =&gt;</span><br><span class="line">            state.articles.filter(<span class="function"><span class="params">article</span> =&gt;</span> article.book_id === bookId),</span><br><span class="line">        getUserArticle: <span class="function"><span class="params">state</span> =&gt;</span> articleId =&gt;</span><br><span class="line">            state.userArticles.find(<span class="function"><span class="params">userArticle</span> =&gt;</span> userArticle.article_id === articleId) || &#123;&#125;,</span><br><span class="line">        getPairedArticles: <span class="function">(<span class="params">_, &#123; getArticles, getUserArticle &#125;</span>) =&gt;</span> bookId =&gt;</span><br><span class="line">            getArticles(bookId).map(<span class="function"><span class="params">article</span> =&gt;</span> (&#123;</span><br><span class="line">                article,</span><br><span class="line">                userArticle: getUserArticle(article.id),</span><br><span class="line">            &#125;)),</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>因为数据是在前端聚合的，所以服务端API需要零散化，返回细粒度的数据。但这样会带来一个问题，就是请求数量增多，可能需要同时查article，tags，user。对此，API可以做物理聚合，不做逻辑聚合，类似：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  article: Ariticle</span><br><span class="line">  tags: Tags[]</span><br><span class="line">  user: User</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这样前端数据层中就可以存储原子化的数据，同一份数据不会维护在多个地方。<br>如果API返回嵌套的数据，也可以借助normalizr将数据范式化。</p>
+<h2 id="（2）数据缓存"><a href="#（2）数据缓存" class="headerlink" title="（2）数据缓存"></a>（2）数据缓存</h2><p>数据层中保存了原子化的数据，如果store中已经存在了相应的数据，那就不需要再从server拉取了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">	 mutations: &#123;</span><br><span class="line">        appendArticles(state, articles) &#123;</span><br><span class="line">            state.articles = [...state.articles, ...articles];</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;,</span><br><span class="line">	actions:&#123;</span><br><span class="line">		async fetchArticlesIfNot(&#123; commit, state &#125;, &#123; bookId &#125;) &#123;</span><br><span class="line">    		if (!state.articles.length || !state.articles.find(article =&gt; 				article.book_id === bookId)) &#123;</span><br><span class="line">        		const res = await fetch(&apos;/articles&apos;);</span><br><span class="line">        		commit(&apos;appendArticles&apos;, res);</span><br><span class="line">    		&#125;</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="4-待深入的点"><a href="#4-待深入的点" class="headerlink" title="4. 待深入的点"></a>4. 待深入的点</h1><ol>
+<li>前端orm将数据层操作更加规范化</li>
+<li>用Worker隔离计算逻辑</li>
+<li>用ServiceWorker实现本地共享</li>
+<li>与本地持久缓存结合</li>
+</ol>
+<h1 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h1><p>数据层有以下优势：<br>1.视图的极度轻量化<br>2.增强了整个应用的可测试性<br>3.跨端复用代码</p>
+<p>vuex, redux都可以实现这样的数据层，不过它们实现的原理不同，写法不同，具体选择哪个看个人喜好和具体使用场景。</p>
+<blockquote>
+<p>本文参考了如下文章：</p>
+<ol>
+<li><a href="https://github.com/xufei/blog/issues/42" target="_blank" rel="noopener">https://github.com/xufei/blog/issues/42</a></li>
+</ol>
+</blockquote>
+
+  </div>
+</article>
+
+
+
+    </div>
+    
+      <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-什么是单页应用的数据层？"><span class="toc-number">1.</span> <span class="toc-text">1. 什么是单页应用的数据层？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-为什么需要数据层？"><span class="toc-number">2.</span> <span class="toc-text">2. 为什么需要数据层？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-怎样设计数据层？"><span class="toc-number">3.</span> <span class="toc-text">3. 怎样设计数据层？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#（1）数据聚合放在前端"><span class="toc-number">3.1.</span> <span class="toc-text">（1）数据聚合放在前端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#（2）数据缓存"><span class="toc-number">3.2.</span> <span class="toc-text">（2）数据缓存</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-待深入的点"><span class="toc-number">4.</span> <span class="toc-text">4. 待深入的点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-总结"><span class="toc-number">5.</span> <span class="toc-text">5. 总结</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://wcxaa.github.io/2018/07/09/spa-store-design/"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&text=复杂单页应用的数据层设计"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&is_video=false&description=复杂单页应用的数据层设计"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=复杂单页应用的数据层设计&body=Check out this article: https://wcxaa.github.io/2018/07/09/spa-store-design/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&title=复杂单页应用的数据层设计"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://wcxaa.github.io/2018/07/09/spa-store-design/&name=复杂单页应用的数据层设计&description="><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+    
+    <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2018 WCX
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+<!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m) {i['GoogleAnalyticsObject']=r;i[r]=i[r]||function() {
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-99901747-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+<!-- Disqus Comments -->
+
+
